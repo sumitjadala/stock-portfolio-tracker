@@ -5,14 +5,14 @@
 import { Injectable } from '@nestjs/common';
 import { firestore } from 'firebase-admin';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { FirebaseService } from '../firebase/firebase.service'; // Correct import path
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class TransactionsService {
-  private readonly db: firestore.Firestore; // Declare property
+  private readonly db: firestore.Firestore;
 
-  constructor(private readonly firebaseService: FirebaseService) { // Inject
-    this.db = this.firebaseService.getFirestore(); // Initialize in constructor
+  constructor(private readonly firebaseService: FirebaseService) {
+    this.db = this.firebaseService.getFirestore();
   }
 
   async create(createTransactionDto: CreateTransactionDto, userId: string) {
@@ -22,5 +22,17 @@ export class TransactionsService {
     };
     const docRef = await this.db.collection('users').doc(userId).collection('transactions').add(transactionData);
     return { id: docRef.id, ...transactionData };
+  }
+
+  async findAllForUser(userId: string) {
+    const transactionsRef = this.db.collection('users').doc(userId).collection('transactions');
+    const snapshot = await transactionsRef.orderBy('date', 'desc').get();
+    if (snapshot.empty) {
+      return [];
+    }
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
   }
 }

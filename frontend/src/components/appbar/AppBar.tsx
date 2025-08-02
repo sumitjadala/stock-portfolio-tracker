@@ -4,14 +4,14 @@ import {
     Typography,
     IconButton,
     Tooltip,
-    Menu,        // Import Menu component
-    MenuItem,     // Import MenuItem component
+    Menu,
+    MenuItem,
     Stack
 } from '@mui/material';
 import {
     Leaderboard,
-    AccountCircle, // Use a profile icon to open the menu
-    Logout         // Icon for the logout option
+    AccountCircle,
+    Logout
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../../firebase';

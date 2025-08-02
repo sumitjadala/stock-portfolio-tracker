@@ -5,6 +5,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { firestore } from 'firebase-admin';
 import { FirebaseService } from '../firebase/firebase.service'; // Import service
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -22,5 +23,13 @@ export class UsersService {
     }
     return docSnap.data();
   }
-  // Other methods like 'create' would also use 'this.db'
+
+  async create(userId: string, createUserDto: CreateUserDto) {
+    await this.db.collection('users').doc(userId).set({
+      fullName: createUserDto.fullName,
+      email: createUserDto.email,
+      phoneNumber: createUserDto.phoneNumber,
+    });
+    return { message: 'User profile created successfully', userId };
+  }
 }

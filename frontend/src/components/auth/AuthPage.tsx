@@ -42,19 +42,22 @@ const AuthPage = () => {
         return;
       }
       try {
-        console.log("Attempting to create user in Firebase Auth with email:", email);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("User successfully created in Firebase Auth. UID:", user.uid);
-        const userProfileData = {
-          fullName: fullName,
-          email: user.email,
-          phoneNumber: phoneNumber
-        };
-        console.log("Attempting to save user profile to Firestore:", userProfileData);
-        await setDoc(doc(db, "users", user.uid), userProfileData);
-        console.log("User profile successfully saved to Firestore.");
-        console.log("Sign-up and profile creation complete. Navigating to /dashboard.");
+        const token = await user.getIdToken();
+
+        await fetch('http://localhost:3000/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fullName: fullName,
+            email: user.email,
+            phoneNumber: phoneNumber,
+          }),
+        });
         navigate('/dashboard');
       } catch (err: any) {
         setError(err.message);

@@ -1,5 +1,5 @@
 // src/transactions/transactions.controller.ts
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -20,5 +20,11 @@ export class TransactionsController {
   create(@Body() createTransactionDto: CreateTransactionDto, @Req() request: AuthenticatedRequest) {
     const userId = request.user.uid;
     return this.transactionsService.create(createTransactionDto, userId);
+  }
+
+  @Get()
+  findAll(@Req() request: AuthenticatedRequest) {
+    const userId = request.user.uid;
+    return this.transactionsService.findAllForUser(userId);
   }
 }
