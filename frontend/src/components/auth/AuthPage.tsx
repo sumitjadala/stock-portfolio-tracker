@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, Card, TextField, Button, Stack, ToggleButtonGroup, ToggleButton, Link } from '@mui/material';
+import { Box, Container, Typography, Card, TextField, Button, Stack, ToggleButtonGroup, ToggleButton, Link, Alert } from '@mui/material';
+import { auth } from '../../../firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import { doc, setDoc } from "firebase/firestore";
+import { db } from '../../../firebase';
 
-// Define the possible modes for our component. This is better than using simple strings.
 type AuthMode = 'login' | 'signup';
 
 const AuthPage = () => {
-  // State to manage whether we are in 'login' or 'signup' mode
   const [mode, setMode] = useState<AuthMode>('login');
-  
-  // State to control the visibility of the "Reset Password" form
-  // This directly implements your request to use a state condition to show/hide this part.
   const [showReset, setShowReset] = useState(false);
+  const navigate = useNavigate();
+  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleModeChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -18,6 +29,58 @@ const AuthPage = () => {
   ) => {
     if (newMode !== null) {
       setMode(newMode);
+      setError(null);
+    }
+  };
+
+  const handleAuthAction = async () => {
+    setError(null);
+
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+      try {
+        console.log("Attempting to create user in Firebase Auth with email:", email);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        console.log("User successfully created in Firebase Auth. UID:", user.uid);
+        const userProfileData = {
+          fullName: fullName,
+          email: user.email,
+          phoneNumber: phoneNumber
+        };
+        console.log("Attempting to save user profile to Firestore:", userProfileData);
+        await setDoc(doc(db, "users", user.uid), userProfileData);
+        console.log("User profile successfully saved to Firestore.");
+        console.log("Sign-up and profile creation complete. Navigating to /dashboard.");
+        navigate('/dashboard');
+      } catch (err: any) {
+        setError(err.message);
+      }
+    } else {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate('/dashboard');
+      } catch (err: any) {
+        setError(err.message);
+      }
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setError(null);
+    if (!email) {
+      setError("Please enter your email to receive a reset link.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert('A password reset link has been sent to your email.'); // Simple confirmation
+      setShowReset(false); // Hide the reset form
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -34,7 +97,6 @@ const AuthPage = () => {
       }}
     >
       <Container maxWidth="xs">
-        {/* Main Title */}
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1" fontWeight="bold">
             Portfolio Tracker
@@ -44,92 +106,50 @@ const AuthPage = () => {
           </Typography>
         </Box>
 
-        {/* Main Form Card */}
         <Card sx={{ p: 4, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-          
-          {/* ----- CONDITIONAL RENDERING FOR RESET PASSWORD FORM ----- */}
-          {/* If showReset is true, we display the reset form. */}
-          {showReset ? (
-            <Box>
-              <Typography variant="h6" fontWeight="bold">Reset Password</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Enter your email to receive a reset link
-              </Typography>
-              <TextField
-                fullWidth
-                label="Email"
-                variant="outlined"
-                margin="normal"
-              />
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Button 
-                  fullWidth 
-                  variant="outlined" 
-                  onClick={() => setShowReset(false)} // This button hides the reset form
-                  sx={{ color: 'text.primary', borderColor: 'grey.400' }}
-                >
-                  Cancel
-                </Button>
-                <Button fullWidth variant="contained" sx={{ backgroundColor: '#1A2027', '&:hover': { backgroundColor: '#333' } }}>
-                  Send Reset Link
-                </Button>
-              </Stack>
-            </Box>
-          ) : (
-            /* ----- CONDITIONAL RENDERING FOR LOGIN/SIGNUP FORM ----- */
-            /* If showReset is false, we display the main login/signup area. */
-            <Box>
-              <Typography variant="h6" fontWeight="bold">Welcome</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Sign in to your account or create a new one
-              </Typography>
 
-              {/* Login/Sign Up Toggle */}
-              <ToggleButtonGroup
-                value={mode}
-                exclusive
-                onChange={handleModeChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              >
+          {showReset ? (
+            <Stack spacing={3}>
+              <Typography variant="h5" component="h2">Reset Password</Typography>
+              <Typography color="text.secondary">Enter your email to receive a reset link</Typography>
+              <TextField label="Email" variant="outlined" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} />
+              {error && <Alert severity="error">{error}</Alert>}
+              <Button variant="contained" size="large" onClick={handlePasswordReset}>Send Reset Link</Button>
+              <Button variant="text" onClick={() => { setShowReset(false); setError(null); }}>Cancel</Button>
+            </Stack>
+          ) : (
+            <Stack spacing={3}>
+              <Typography variant="h5" component="h2">Welcome</Typography>
+              <ToggleButtonGroup value={mode} exclusive onChange={handleModeChange} fullWidth>
                 <ToggleButton value="login">Login</ToggleButton>
                 <ToggleButton value="signup">Sign Up</ToggleButton>
               </ToggleButtonGroup>
-
-              {/* Form Fields */}
-              <TextField fullWidth label="Email" variant="outlined" margin="dense" />
-              <TextField fullWidth label="Password" type="password" variant="outlined" margin="dense" />
-              
-              {/* This is a simple example of conditional content based on the 'mode' state */}
               {mode === 'signup' && (
-                <TextField fullWidth label="Confirm Password" type="password" variant="outlined" margin="dense" />
+                <>
+                  <TextField label="Full Name" variant="outlined" fullWidth value={fullName} onChange={(e) => setFullName(e.target.value)} sx={{ mb: 2 }} />
+                  <TextField label="Phone Number" variant="outlined" fullWidth value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                </>
+              )}
+              <TextField label="Email" variant="outlined" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} />
+              <TextField label="Password" type="password" variant="outlined" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} />
+
+              {mode === 'signup' && (
+                <TextField label="Confirm Password" type="password" variant="outlined" fullWidth value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               )}
 
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                sx={{ mt: 2, py: 1.5, backgroundColor: '#1A2027', '&:hover': { backgroundColor: '#333' } }}
-              >
+              {error && <Alert severity="error">{error}</Alert>}
+
+              <Button variant="contained" size="large" onClick={handleAuthAction}>
                 {mode === 'login' ? 'Sign In' : 'Sign Up'}
               </Button>
 
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Link 
-                  component="button" 
-                  variant="body2" 
-                  onClick={() => setShowReset(true)} // This link shows the reset form
-                  sx={{ textDecoration: 'none' }}
-                >
-                  Forgot Password?
-                </Link>
-              </Box>
-            </Box>
+              <Link href="#" onClick={(e) => { e.preventDefault(); setShowReset(true); }} sx={{ textAlign: 'center' }}>
+                Forgot Password?
+              </Link>
+            </Stack>
           )}
         </Card>
-
-        {/* Footer Text */}
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 3, textAlign: 'center' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 2 }}>
           Your data is securely stored and managed
         </Typography>
       </Container>
