@@ -1,30 +1,27 @@
 
 import './LandingPage.css';
-import { Box, Container, Typography, Stack, Grid, styled, Paper, Card, CardContent, Button } from '@mui/material';
-import { Leaderboard, AccountCircle, AddCircleOutline, Assessment } from '@mui/icons-material';
+import { Box, Container, Typography, Stack, Grid, Card, CardContent, Button } from '@mui/material';
+import { Leaderboard, AddCircleOutline, Assessment } from '@mui/icons-material';
 import { featureData } from './data';
+import TransactionModal from '../transactions/TransactionModal';
+import { useState } from 'react';
 
 interface StatCardProps {
-  title: string;
-  value: string;
+    title: string;
+    value: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
-  <Card variant="outlined" sx={{ flex: 1, p: 2, textAlign: 'center' }}>
-    <Typography variant="body2" color="text.secondary">{title}</Typography>
-    <Typography variant="h6" fontWeight="bold">{value}</Typography>
-  </Card>
+    <Card variant="outlined" sx={{ flex: 1, p: 2, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">{title}</Typography>
+        <Typography variant="h6" fontWeight="bold">{value}</Typography>
+    </Card>
 );
 
 const LandingPage = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     return (
         <Box sx={{ backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
-            {/* <Box component="nav" sx={{ display: 'flex', alignItems: 'center', p: 2, backgroundColor: 'white', borderBottom: '1px solid #e0e0e0' }}>
-                <Leaderboard sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>Portfolio Tracker</Typography>
-                <Stack direction="row" alignItems="center" spacing={1}><AccountCircle sx={{ color: 'text.secondary' }} /><Typography>sdsafasd</Typography></Stack>
-            </Box> */}
-
             <Container maxWidth="md" sx={{ textAlign: 'center', py: 5 }}>
                 <Box sx={{ mb: 6 }}>
                     <Box sx={{ display: 'inline-flex', p: 1.5, backgroundColor: 'rgba(0, 123, 255, 0.1)', borderRadius: '50%', mb: 2 }}><Leaderboard fontSize="large" color="primary" /></Box>
@@ -50,7 +47,6 @@ const LandingPage = () => {
                 </Grid>
 
 
-                {/* Call to Action Card */}
                 <Card sx={{
                     p: 4,
                     borderRadius: 4,
@@ -78,6 +74,7 @@ const LandingPage = () => {
                             textTransform: 'none',
                             fontWeight: 'bold'
                         }}
+                        onClick={() => setIsModalOpen(true)}
                     >
                         Add Your First Transaction
                     </Button>
@@ -109,6 +106,10 @@ const LandingPage = () => {
                         <Typography>Your portfolio charts will appear here</Typography>
                     </Box>
                 </Card>
+                <TransactionModal
+                    open={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                />
             </Container>
 
 

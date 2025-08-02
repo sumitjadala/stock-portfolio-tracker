@@ -30,6 +30,7 @@ export default tseslint.config(
         'error',
         {
           endOfLine: 'auto',
+          printWidth: 120,
         },
       ],
       '@typescript-eslint/no-explicit-any': 'off',

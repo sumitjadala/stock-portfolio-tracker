@@ -9,6 +9,8 @@ import AppBar from './components/appbar/AppBar';
 import { auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
+import LandingPage from './components/home/LandingPage';
+import { useUserStore } from './components/store/userStore';
 
 const ProtectedRoute = ({ user }: { user: User | null }) => {
   if (!user) {
@@ -31,14 +33,20 @@ const AppLayout = () => {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { fetchUserProfile, clearUserProfile } = useUserStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        fetchUserProfile(currentUser.uid);
+      } else {
+        clearUserProfile();
+      }
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [fetchUserProfile, clearUserProfile]);
 
   if (loading) {
     return (
@@ -59,7 +67,7 @@ function App() {
         <Route element={<ProtectedRoute user={user} />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/home" element={<LandingPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />

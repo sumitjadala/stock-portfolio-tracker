@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { 
-    Box, 
-    Typography, 
-    IconButton, 
-    Tooltip, 
+import {
+    Box,
+    Typography,
+    IconButton,
+    Tooltip,
     Menu,        // Import Menu component
-    MenuItem     // Import MenuItem component
+    MenuItem,     // Import MenuItem component
+    Stack
 } from '@mui/material';
-import { 
-    Leaderboard, 
+import {
+    Leaderboard,
     AccountCircle, // Use a profile icon to open the menu
     Logout         // Icon for the logout option
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../../firebase';
 import { signOut } from 'firebase/auth';
+import { useUserStore } from '../store/userStore';
 
 const AppBar = () => {
     const navigate = useNavigate();
-
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl); // A boolean to easily check if the menu is open
+    const { profile } = useUserStore();
+
+    const open = Boolean(anchorEl);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -61,13 +64,15 @@ const AppBar = () => {
             <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
                 Portfolio Tracker
             </Typography>
-            
+
             <Tooltip title="Account settings">
-                <IconButton onClick={handleMenuOpen} color="inherit">
-                    <AccountCircle />
+                <IconButton onClick={handleMenuOpen} color="inherit" size="small">
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <AccountCircle />
+                        {profile && <Typography variant="body2">{profile.fullName}</Typography>}                    </Stack>
                 </IconButton>
             </Tooltip>
-            
+
             <Menu
                 anchorEl={anchorEl}
                 open={open}
