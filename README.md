@@ -1,6 +1,6 @@
-=========================
+
 STOCK PORTFOLIO TRACKER
-=========================
+
 
 A full-stack web application designed to help users track and manage their stock investment portfolios. Built with a modern tech stack featuring React on the frontend and NestJS on the backend, with Firebase for authentication and database services.
 
