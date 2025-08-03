@@ -1,3 +1,4 @@
+import { useTransactionStore } from '../store/transactionStore';
 import { useState } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
@@ -20,7 +21,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
     const [shares, setShares] = useState('');
     const [price, setPrice] = useState('');
     const [transactionDate, setTransactionDate] = useState<Date | null>(new Date());
-
+    const { triggerRefresh } = useTransactionStore();
     const parsedShares = Number(shares);
     const parsedPrice = Number(price);
 
@@ -61,6 +62,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
             }
             const result = await response.json();
             console.log("Transaction saved successfully via backend:", result);
+            triggerRefresh();
             onClose();
         } catch (error) {
             console.error("Failed to save transaction:", error);

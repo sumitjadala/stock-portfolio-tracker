@@ -7,15 +7,16 @@ import PieChartIcon from '@mui/icons-material/PieChart';
 import { fetchTransactions } from '../api/transactions-api';
 import { auth } from '../../../firebase';
 import { useModalStore } from '../store/modalStore';
-
 import { StatCard } from './StatCard';
 import { HoldingsTable } from './HoldingsTable';
 import { EmptyState } from './EmptyState';
 import { PerformanceChart } from './PerformanceChart';
 import { AllocationPieChart } from './AllocationPieChart';
+import { useTransactionStore } from '../store/transactionStore';
 
 const DashboardPage = () => {
   const { openTransactionModal } = useModalStore();
+  const { refreshKey } = useTransactionStore();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ const DashboardPage = () => {
       }
     };
     loadTransactions();
-  }, []);
+  }, [refreshKey]);
 
   const totalValue = transactions.reduce((sum, tx) => sum + (tx.shares * tx.pricePerShare), 0);
   const totalHoldings = new Set(transactions.map(tx => tx.stockSymbol)).size;
