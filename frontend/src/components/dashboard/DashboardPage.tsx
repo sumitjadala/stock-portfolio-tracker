@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Grid, Paper, Card, CardHeader, CardContent } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Typography, CircularProgress, Grid, Paper, Card, CardHeader, CardContent, Stack, Container } from '@mui/material';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import PieChartIcon from '@mui/icons-material/PieChart';
-import AssessmentIcon from '@mui/icons-material/Assessment';
 
 import { fetchTransactions } from '../api/transactions-api';
 import { auth } from '../../../firebase';
@@ -12,6 +11,8 @@ import { useModalStore } from '../store/modalStore';
 import { StatCard } from './StatCard';
 import { HoldingsTable } from './HoldingsTable';
 import { EmptyState } from './EmptyState';
+import { PerformanceChart } from './PerformanceChart';
+import { AllocationPieChart } from './AllocationPieChart';
 
 const DashboardPage = () => {
   const { openTransactionModal } = useModalStore();
@@ -51,69 +52,77 @@ const DashboardPage = () => {
   }
 
   return (
-    <Box>
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <StatCard 
-            title="Portfolio Value" 
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Stack spacing={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 3,
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(3, 1fr)',
+            },
+          }}
+        >
+          <StatCard
+            title="Portfolio Value"
             value={`$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             icon={<AttachMoneyIcon color="action" />}
             isLoading={isLoading}
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard 
-            title="Total Gain/Loss" 
-            value="$0.00" // Placeholder
+          <StatCard
+            title="Total Gain/Loss"
+            value="$0.00"
             icon={<ShowChartIcon color="action" />}
             isLoading={isLoading}
-            color="#4caf50" // Placeholder green
+            color="#4caf50"
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard 
-            title="Holdings" 
-            value={totalHoldings}
+          <StatCard
+            title="Holdings"
+            value={String(totalHoldings)}
             icon={<PieChartIcon color="action" />}
             isLoading={isLoading}
           />
-        </Grid>
-      </Grid>
-      
-      {/* Chart Placeholders */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} lg={8}>
-          <Card variant="outlined">
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 3,
+            gridTemplateColumns: {
+              xs: '1fr',
+              lg: '2fr 1fr',
+            },
+          }}
+        >
+          <Card variant="outlined" sx={{ height: '100%' }}>
             <CardHeader title="Portfolio Performance" subheader="Historical value over time" />
-            <Box sx={{ height: '236px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
-                <AssessmentIcon sx={{ mr: 1, fontSize: '2rem' }} />
-                <Typography>Performance chart will appear here.</Typography>
-            </Box>
+            <CardContent>
+              <PerformanceChart />
+            </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} lg={4}>
-          <Card variant="outlined">
+          <Card variant="outlined" sx={{ height: '100%' }}>
             <CardHeader title="Asset Allocation" subheader="Distribution by holdings" />
-            <Box sx={{ height: '236px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
-                <PieChartIcon sx={{ mr: 1, fontSize: '2rem' }} />
-                <Typography>Allocation pie chart will appear here.</Typography>
-            </Box>
+            <CardContent>
+              <AllocationPieChart />
+            </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-      
-      {/* Holdings Table */}
-      <Card variant="outlined">
-        <CardHeader 
+        </Box>
+
+        <Card variant="outlined">
+          <CardHeader
             title="Your Holdings"
             subheader="A detailed view of your individual transactions"
-        />
-        <CardContent>
+          />
+          <CardContent>
             <HoldingsTable transactions={transactions} />
-        </CardContent>
-      </Card>
-    </Box>
+          </CardContent>
+        </Card>
+
+      </Stack>
+    </Container>
   );
+
 };
 
 export default DashboardPage;
