@@ -1,25 +1,65 @@
 
 import './LandingPage.css';
-import { Box, Container, Typography, Stack, Grid, Card, CardContent, Button } from '@mui/material';
+import { Box, Container, Typography, Stack, Grid, Card, CardContent, Button, Skeleton } from '@mui/material';
 import { Leaderboard, AddCircleOutline, Assessment } from '@mui/icons-material';
 import { featureData } from './data';
 import TransactionModal from '../transactions/TransactionModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchTransactions } from '../api/transactions-api';
+import { auth } from '../../../firebase';
+import { Link } from 'react-router-dom';
 
 interface StatCardProps {
     title: string;
     value: string;
+    isLoading: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, value, isLoading }) => (
     <Card variant="outlined" sx={{ flex: 1, p: 2, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">{title}</Typography>
-        <Typography variant="h6" fontWeight="bold">{value}</Typography>
+        {isLoading ? (
+            <Skeleton variant="text" sx={{ fontSize: 'h6', mt: 0.5 }} />
+        ) : (
+            <Typography variant="h6" fontWeight="bold">{value}</Typography>
+        )}
     </Card>
 );
 
 const LandingPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setIsLoading(true);
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    setIsLoading(false);
+                    return;
+                }
+                const token = await user.getIdToken();
+                const data = await fetchTransactions(token);
+                setTransactions(data);
+            } catch (err: any) {
+                console.error("Failed to load dashboard data:", err);
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadInitialData();
+    }, []);
+
+    const totalPortfolioValue = transactions.reduce(
+        (sum, tx) => sum + (tx.transactionAmount || 0),
+        0
+    );
+    const holdingsCount = new Set(transactions.map(tx => tx.stockSymbol)).size;
+
     return (
         <Box sx={{ backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
             <Container maxWidth="md" sx={{ textAlign: 'center', py: 5 }}>
@@ -28,11 +68,26 @@ const LandingPage = () => {
                     <Typography variant="h4" fontWeight="bold" gutterBottom>Welcome to Your Portfolio</Typography>
                     <Typography variant="body1" color="text.secondary">Start building your investment portfolio by adding your first transaction. Track your<br />holdings, monitor performance, and make informed investment decisions.</Typography>
                 </Box>
-                <Grid container spacing={3} justifyContent="center" alignItems="stretch">
+                <Grid container spacing={3} justifyContent="center" alignItems="stretch" sx={{ mt: 6 }}>
                     {featureData.map((feature, idx) => (
                         <Grid item xs={12} md={4} key={idx}>
-                            <Card className="db-card" variant="outlined">
-                                <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                            <Card
+                                component={Link}
+                                to="/dashboard"
+                                variant="outlined"
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    '&:hover': {
+                                        boxShadow: 3,
+                                        borderColor: 'primary.main'
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ flexGrow: 1, p: 3, textAlign: 'center' }}>
                                     {feature.icon}
                                     <Typography variant="h6" gutterBottom>
                                         {feature.title}
@@ -46,13 +101,13 @@ const LandingPage = () => {
                     ))}
                 </Grid>
 
-
                 <Card sx={{
                     p: 4,
                     borderRadius: 4,
                     color: 'white',
                     background: 'linear-gradient(90deg, #4338ca, #6d28d9)',
-                    mb: 6 // margin bottom to space it out
+                    mb: 6,
+                    mt: 5
                 }}>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
                         Ready to start investing?
@@ -80,18 +135,27 @@ const LandingPage = () => {
                     </Button>
                 </Card>
 
-                {/* Dashboard Preview Card (from the new screenshot) */}
                 <Card variant="outlined" sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                     <Typography variant="h6" sx={{ mb: 3 }}>
                         Here's what your dashboard will look like:
                     </Typography>
-                    {/* Stat Cards Section */}
                     <Stack direction="row" spacing={2} sx={{ mb: 4 }}>
-                        <StatCard title="Total Portfolio Value" value="$0.00" />
-                        <StatCard title="Total Gain/Loss" value="$0.00" />
-                        <StatCard title="Holdings" value="0" />
+                        <StatCard
+                            title="Total Portfolio Value"
+                            value={`$${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            isLoading={isLoading}
+                        />
+                        <StatCard
+                            title="Total Gain/Loss"
+                            value="$0.00"
+                            isLoading={isLoading}
+                        />
+                        <StatCard
+                            title="Holdings"
+                            value={String(holdingsCount)}
+                            isLoading={isLoading}
+                        />
                     </Stack>
-                    {/* Chart Placeholder */}
                     <Box sx={{
                         p: 5,
                         backgroundColor: '#f9fafb',

@@ -1,6 +1,4 @@
-// src/components/transactions/TransactionModal.tsx
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
     Select, MenuItem, FormControl, InputLabel, Stack, IconButton
@@ -9,7 +7,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import CloseIcon from '@mui/icons-material/Close';
-import { auth } from '../../../firebase';
+import { auth } from '../../../firebase'; // Adjusted path to be more robust
 
 interface TransactionModalProps {
     open: boolean;
@@ -22,6 +20,12 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
     const [shares, setShares] = useState('');
     const [price, setPrice] = useState('');
     const [transactionDate, setTransactionDate] = useState<Date | null>(new Date());
+
+    const parsedShares = Number(shares);
+    const parsedPrice = Number(price);
+
+    const showTransactionAmount = parsedPrice > 0;
+    const transactionAmount = parsedShares * parsedPrice;
 
     const handleAddTransaction = async () => {
         const user = auth.currentUser;
@@ -41,6 +45,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
                 shares: Number(shares),
                 pricePerShare: Number(price),
                 date: transactionDate.toISOString(),
+                transactionAmount: Number(transactionAmount)
             };
             const response = await fetch('http://localhost:3000/transactions', {
                 method: 'POST',
@@ -61,6 +66,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
             console.error("Failed to save transaction:", error);
         }
     };
+
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -71,6 +77,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={3} sx={{ mt: 2 }}>
+                    {/* ... (Stock and Transaction Type fields remain the same) ... */}
                     <TextField
                         label="Stock"
                         placeholder="Search for a stock (e.g., AAPL, Apple)"
@@ -89,6 +96,7 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
                             <MenuItem value="sell">Sell</MenuItem>
                         </Select>
                     </FormControl>
+
                     <Stack direction="row" spacing={2}>
                         <TextField
                             label="Shares"
@@ -105,6 +113,20 @@ const TransactionModal = ({ open, onClose }: TransactionModalProps) => {
                             onChange={(e) => setPrice(e.target.value)}
                         />
                     </Stack>
+                    {showTransactionAmount && (
+                        <TextField
+                            label="Total Transaction Amount"
+                            disabled
+                            fullWidth
+                            value={
+                                `$${transactionAmount.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}`
+                            }
+                        />
+                    )}
+
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <DatePicker
                             label="Transaction Date"

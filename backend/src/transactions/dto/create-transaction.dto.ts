@@ -16,4 +16,7 @@ export class CreateTransactionDto {
 
   @IsDateString()
   date!: string;
+
+  @IsNumber()
+  transactionAmount!: number;
 }
